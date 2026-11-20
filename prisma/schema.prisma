@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+enum Role {
+  SUPER_ADMIN
+  EDITOR
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum BlockType {
+  HERO
+  ABOUT
+  SERVICES_GRID
+  FEATURES
+  GALLERY
+  CATALOG_PREVIEW
+  TESTIMONIALS
+  CONTACT_WHATSAPP
+}
+
+enum Folder {
+  PORTADA
+  SERVICIOS
+  CATALOGO
+  GENERAL
+}
+
+enum PlanName {
+  LANDING
+  WEB_CMS
+  CATALOGO
+}
+
+enum Preset {
+  EDITORIAL_WARM
+  CORPORATE_CLEAN
+  MODERN_BOLD
+}
+
+enum Radius {
+  SHARP
+  SOFT
+  ROUNDED
+}
+
+enum Animation {
+  SUBTLE
+  EXPRESSIVE
+  NONE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EDITOR)
+  active       Boolean  @default(true)
+  authVersion  Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model SiteConfig {
+  id                     String   @id @default("site")
+  siteName               String
+  tagline                String
+  domain                 String
+  logoMediaId            String?
+  faviconMediaId         String?
+  logo                   Media?   @relation("Logo", fields: [logoMediaId], references: [id], onDelete: Restrict)
+  favicon                Media?   @relation("Favicon", fields: [faviconMediaId], references: [id], onDelete: Restrict)
+  whatsappCountryCode    String   @default("+502")
+  whatsappNumber         String
+  whatsappDefaultMessage String
+  mapsUrl                String
+  address                String
+  socialLinksJson        String
+  businessHoursJson      String
+  footerCreditEnabled    Boolean  @default(true)
+  footerCreditText       String   @default("Administrado por Nodara Web")
+  writeVersion           Int      @default(0)
+  updatedAt              DateTime @updatedAt
+}
+
+model PlanModules {
+  id            String   @id @default("site")
+  planName      PlanName @default(CATALOGO)
+  maxPages      Int      @default(5)
+  maxProducts   Int      @default(40)
+  maxCategories Int      @default(5)
+  maxStorageMb  Int      @default(1024)
+  enableCatalog Boolean  @default(true)
+  enableBlog    Boolean  @default(false)
+  enableForms   Boolean  @default(false)
+}
+
+model ThemeConfig {
+  id              String    @id @default("site")
+  preset          Preset
+  primaryColor    String
+  secondaryColor  String
+  accentColor     String
+  backgroundColor String
+  surfaceColor    String
+  textColor       String
+  headingFont     String
+  bodyFont        String
+  borderRadius    Radius
+  animationLevel  Animation
+  updatedAt       DateTime  @updatedAt
+}
+
+model Page {
+  id               String     @id @default(cuid())
+  slug             String     @unique
+  title            String
+  isHome           Boolean    @default(false)
+  status           PageStatus @default(DRAFT)
+  seoTitle         String     @default("")
+  seoDescription   String     @default("")
+  ogImageMediaId   String?
+  ogImage          Media?     @relation(fields: [ogImageMediaId], references: [id], onDelete: Restrict)
+  order            Int        @default(0)
+  blocks           PageBlock[]
+  publishedAt      DateTime?
+  updatedAt        DateTime   @updatedAt
+}
+
+model PageBlock {
+  id                String    @id @default(cuid())
+  pageId            String
+  page              Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type              BlockType
+  label             String
+  order             Int
+  visible           Boolean   @default(true)
+  lockedStructure   Boolean   @default(true)
+  draftDataJson     String
+  draftRemoved      Boolean   @default(false)
+  publishedDataJson String    @default("{}")
+  publishedOrder    Int       @default(0)
+  publishedVisible  Boolean   @default(false)
+
+  @@index([pageId, order])
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  priceGtq     Float
+  description  String
+  badge        String?
+  imageMediaId String?
+  image        Media?   @relation(fields: [imageMediaId], references: [id], onDelete: Restrict)
+  visible      Boolean  @default(true)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([categoryId, order])
+}
+
+model Media {
+  id         String   @id @default(cuid())
+  filename   String
+  storageKey String   @unique
+  url        String
+  mimeType   String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  folder     Folder   @default(GENERAL)
+  altText    String
+  createdAt  DateTime @default(now())
+  logos      SiteConfig[] @relation("Logo")
+  favicons   SiteConfig[] @relation("Favicon")
+  pages      Page[]
+  products   Product[]
+}
+
+model Revision {
+  id           String   @id @default(cuid())
+  summary      String
+  authorName   String
+  snapshotJson String   @default("")
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model LoginAttempt {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+}

@@ -1,0 +1,10 @@
+/node_modules/
+/.next/
+/out/
+*.tsbuildinfo
+.env*
+!.env.example
+/prisma/*.db*
+/public/uploads/*
+!/public/uploads/seed/
+/prisma/.generated-postgres.prisma
