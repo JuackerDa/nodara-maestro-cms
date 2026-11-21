@@ -17,5 +17,5 @@ export function ThemeProvider({ theme, children }: { theme: Theme, children: Rea
     '--theme-heading': `"${theme.headingFont} Variable", serif`,
     '--theme-body': `"${theme.bodyFont} Variable", sans-serif`,
   } as CSSProperties
-  return <div className="public-theme" data-theme-preset={theme.preset} style={style}>{children}</div>
+  return <div className="public-theme" data-theme-preset={theme.preset} data-theme-motion={theme.animationLevel} style={style}>{children}</div>
 }

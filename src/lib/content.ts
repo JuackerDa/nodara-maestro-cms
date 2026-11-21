@@ -15,7 +15,7 @@ export const plans = {
   CATALOGO: { label: 'Catálogo Comercial', maxPages: 5, maxProducts: 40, maxCategories: 5, maxStorageMb: 1024, enableCatalog: true, enableBlog: true, enableForms: true },
 } as const
 export const themes = {
-  EDITORIAL_WARM: { label: 'Editorial cálido', primaryColor: '#523427', secondaryColor: '#755848', accentColor: '#E6A372', backgroundColor: '#FAF5EB', surfaceColor: '#F3E7D6', textColor: '#231B17', headingFont: 'Playfair Display', bodyFont: 'DM Sans', borderRadius: 'SOFT', animationLevel: 'SUBTLE' },
+  EDITORIAL_WARM: { label: 'Editorial cálido', primaryColor: '#402A22', secondaryColor: '#654D41', accentColor: '#E9A980', backgroundColor: '#FAF5EB', surfaceColor: '#F0E2D1', textColor: '#241915', headingFont: 'Playfair Display', bodyFont: 'DM Sans', borderRadius: 'SOFT', animationLevel: 'SUBTLE' },
   CORPORATE_CLEAN: { label: 'Corporativo limpio', primaryColor: '#1649B2', secondaryColor: '#425473', accentColor: '#2DC7C1', backgroundColor: '#FFFFFF', surfaceColor: '#EBF2FC', textColor: '#101D33', headingFont: 'Plus Jakarta Sans', bodyFont: 'Inter', borderRadius: 'ROUNDED', animationLevel: 'SUBTLE' },
   MODERN_BOLD: { label: 'Moderno audaz', primaryColor: '#C7F052', secondaryColor: '#BCCAC5', accentColor: '#F093FF', backgroundColor: '#121615', surfaceColor: '#202825', textColor: '#F8FFF8', headingFont: 'Inter', bodyFont: 'DM Sans', borderRadius: 'SHARP', animationLevel: 'EXPRESSIVE' },
 } as const

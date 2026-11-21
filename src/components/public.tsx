@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type { SiteConfig } from '@prisma/client'
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Coffee, MapPin, MessageCircle } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUpRight, Coffee, MapPin, MessageCircle } from 'lucide-react'
 import { blockLabels, days, money, productMessage, readJson, whatsapp, type BlockType } from '@/lib/content'
 import type { BlockData } from '@/lib/schemas'
-import { MotionReveal } from './motion-reveal'
+import { PublicMotion } from './public-motion'
 import type { Theme } from './theme'
 
 export type Picture = { id: string, url: string, altText: string }
@@ -17,11 +18,11 @@ export type PublicIdentity = Contact & Pick<SiteConfig, 'siteName' | 'tagline' |
 export type NavigationPage = { slug: string, title: string, isHome: boolean }
 
 function Photo({ image, alt, eager = false }: { image: Picture, alt?: string, eager?: boolean }) {
-  return <img src={image.url} alt={alt || image.altText} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  return <img src={image.url} alt={alt || image.altText} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchPriority={eager ? 'high' : undefined} />
 }
 export function ProductCard({ product, site }: { product: CardProduct, site: Contact }) {
   const link = whatsapp(site, productMessage(product))
-  return <article className="product-card">
+  return <article className="product-card" data-scroll-item>
     {product.image && <div className="product-photo"><Photo image={product.image} />{product.badge && <span>{product.badge}</span>}</div>}
     <div className="product-info">
       <p className="public-kicker">{product.category.name}</p>
@@ -32,7 +33,7 @@ export function ProductCard({ product, site }: { product: CardProduct, site: Con
   </article>
 }
 
-function Section({ block, data }: { block: RenderBlock, data: Context }) {
+function Section({ block, data, nextSection }: { block: RenderBlock, data: Context, nextSection?: string }) {
   const { media, site, catalog, products } = data
   const picture = (id?: string | null) => media.find(image => image.id === id)
   switch (block.type) {
@@ -40,37 +41,46 @@ function Section({ block, data }: { block: RenderBlock, data: Context }) {
       const d = block.data as Partial<BlockData<'HERO'>>
       const image = picture(d?.imageMediaId)
       const href = d?.ctaAction === 'CATALOGO' ? catalog ? '/catalogo' : undefined : d?.ctaAction === 'ANCLA' ? d.anchor : whatsapp(site)
-      return <section className="public-hero">
-        <div className="hero-text"><p className="public-kicker">{site.address}</p><h1>{d?.title}</h1><p>{d?.subtitle}</p>
-          {href && d?.ctaText && <a className="public-button" href={href} {...(d.ctaAction === 'WHATSAPP' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{d.ctaText}<ArrowDownRight size={18} /></a>}
+      return <section className="public-hero" data-hero-layout={image ? 'image' : 'text'}>
+        <div className="hero-text">
+          {site.address && <p className="public-kicker" data-hero-intro><MapPin size={15} aria-hidden="true" />{site.address}</p>}
+          <h1 data-hero-intro>{d?.title}</h1>
+          {d?.subtitle && <p className="hero-summary" data-hero-intro>{d.subtitle}</p>}
+          {href && d?.ctaText && <a className="public-button" href={href} data-hero-intro
+            {...(d.ctaAction === 'WHATSAPP' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+            {d.ctaText}<ArrowUpRight size={18} aria-hidden="true" />
+          </a>}
         </div>
-        {image && <div className="hero-photo"><Photo image={image} alt={d?.imageAlt} eager /></div>}
+        {image && <div className="hero-frame" data-hero-frame><div className="hero-photo"><Photo image={image} alt={d?.imageAlt} eager /></div></div>}
+        {nextSection && <a className="hero-scroll" href={'#' + nextSection} aria-label="Ir a la siguiente sección">
+          <ArrowDown size={18} aria-hidden="true" />
+        </a>}
       </section>
     }
     case 'ABOUT': {
       const value = block.data as Partial<BlockData<'ABOUT'>>
       const image = picture(value?.imageMediaId)
-      return <section className="public-section about-section">
-        {image && <div className="about-photo"><Photo image={image} /></div>}
-        <div><h2>{value?.title}</h2><p>{value?.description}</p></div>
+      return <section className="public-section about-section" data-with-image={!!image}>
+        {image && <div className="about-photo" data-scroll-item><Photo image={image} /></div>}
+        <div className="about-copy" data-scroll-item><h2>{value?.title}</h2><p>{value?.description}</p></div>
       </section>
     }
     case 'SERVICES_GRID': {
       const d = block.data as Partial<BlockData<'SERVICES_GRID'>>
       return <section className="public-section"><h2>{d.title}</h2><div className="public-grid">
-        {d.items?.map((item, index) => <article className="public-tile" key={index}><strong>{money(item.priceGtq || 0)}</strong><h3>{item.name}</h3><p>{item.description}</p></article>)}
+        {d.items?.map((item, index) => <article className="public-tile" data-scroll-item key={index}><strong>{money(item.priceGtq || 0)}</strong><h3>{item.name}</h3><p>{item.description}</p></article>)}
       </div></section>
     }
     case 'FEATURES': {
       const d = block.data as Partial<BlockData<'FEATURES'>>
       return <section className="public-section feature-section"><h2>{d.title}</h2><div className="public-grid">
-        {d.items?.map((item, index) => <article className="public-tile" key={index}><h3>{item.title}</h3><p>{item.description}</p></article>)}
+        {d.items?.map((item, index) => <article className="public-tile" data-scroll-item key={index}><h3>{item.title}</h3><p>{item.description}</p></article>)}
       </div></section>
     }
     case 'GALLERY': {
       const d = block.data as Partial<BlockData<'GALLERY'>>
       return <section className="public-section"><h2>{d.title}</h2><div className="public-grid">
-        {d.imageMediaIds?.map((id, i) => { const image = picture(id); return image && <div className="gallery-photo" key={id + i}><Photo image={image} /></div> })}
+        {d.imageMediaIds?.map((id, i) => { const image = picture(id); return image && <div className="gallery-photo" data-scroll-item key={id + i}><Photo image={image} /></div> })}
       </div></section>
     }
     case 'CATALOG_PREVIEW': {
@@ -85,45 +95,65 @@ function Section({ block, data }: { block: RenderBlock, data: Context }) {
     case 'TESTIMONIALS': {
       const d = block.data as Partial<BlockData<'TESTIMONIALS'>>
       return <section className="public-section"><h2>{d.title}</h2><div className="public-grid">
-        {d.items?.filter(item => item.approved).map((item, i) => <figure key={i} className="public-tile"><blockquote>{item.text}</blockquote><figcaption><strong>{item.author}</strong> {item.position}</figcaption></figure>)}
+        {d.items?.filter(item => item.approved).map((item, i) => <figure key={i} className="public-tile" data-scroll-item><blockquote>{item.text}</blockquote><figcaption><strong>{item.author}</strong> {item.position}</figcaption></figure>)}
       </div></section>
     }
     case 'CONTACT_WHATSAPP': {
       const d = block.data as Partial<BlockData<'CONTACT_WHATSAPP'>>
       const link = whatsapp(site)
       const hours = readJson<Record<string, { open: boolean, from: string, to: string }>>(site.businessHoursJson, {})
-      return <section className="public-section contact-section"><div><h2>{d.title}</h2><p>{d.text}</p>
+      return <section className="public-section contact-section"><div data-scroll-item><h2>{d.title}</h2><p>{d.text}</p>
         {site.address && <p><MapPin size={16} />{site.mapsUrl ? <a href={site.mapsUrl} target="_blank" rel="noopener noreferrer">{site.address}</a> : site.address}</p>}
         {link && <a className="public-button" href={link} target="_blank" rel="noopener noreferrer"><MessageCircle size={17} /> Escríbenos</a>}
-      </div><dl>{days.map(day => hours[day] && <div key={day}><dt>{day}</dt><dd>{hours[day].open ? `${hours[day].from}–${hours[day].to}` : 'Cerrado'}</dd></div>)}</dl></section>
+      </div><dl data-scroll-item>{days.map(day => hours[day] && <div key={day}><dt>{day}</dt><dd>{hours[day].open ? `${hours[day].from}–${hours[day].to}` : 'Cerrado'}</dd></div>)}</dl></section>
     }
   }
 }
 export function BlockRenderer({ blocks, theme, data, onEdit, selected }: {
   blocks: RenderBlock[], theme: Theme, data: Context, onEdit?: (id: string) => void, selected?: string,
 }) {
-  return <div className="public-blocks">{blocks.filter(block => block.visible && (data.catalog || block.type !== 'CATALOG_PREVIEW')).map((block, index) => (
-    <div key={block.id} id={block.type === 'CONTACT_WHATSAPP' && blocks.find(b => b.type === 'CONTACT_WHATSAPP' && b.visible)?.id === block.id ? 'contacto' : undefined}
-      className={onEdit ? 'preview-block' : undefined} data-selected={selected === block.id ? true : undefined}>
-      {onEdit && <button type="button" className="edit-block" onClick={() => onEdit(block.id)} aria-label={`Editar bloque ${blockLabels[block.type]}`}>Editar bloque</button>}
-      <MotionReveal level={onEdit || index === 0 ? 'NONE' : theme.animationLevel}><Section block={block} data={data} /></MotionReveal>
-    </div>
-  ))}</div>
+  const shown = blocks.filter(block => block.visible && (data.catalog || block.type !== 'CATALOG_PREVIEW'))
+  const contact = shown.find(block => block.type === 'CONTACT_WHATSAPP')
+  const blockId = (block: RenderBlock) => block === contact ? 'contacto' : 'seccion-' + block.id
+  return <PublicMotion level={onEdit ? 'NONE' : theme.animationLevel}>
+    <div className="public-blocks">{shown.map((block, index) => (
+      <div key={block.id} id={onEdit && block !== contact ? undefined : blockId(block)}
+        className={onEdit ? 'preview-block' : 'public-block'}
+        data-scroll-scene={!onEdit && index > 0 && block.type !== 'HERO' ? '' : undefined}
+        data-selected={selected === block.id ? true : undefined}>
+        {onEdit && <button type="button" className="edit-block" onClick={() => onEdit(block.id)} aria-label={`Editar bloque ${blockLabels[block.type]}`}>Editar bloque</button>}
+        <Section block={block} data={data} nextSection={!onEdit && shown[index + 1] ? blockId(shown[index + 1]) : undefined} />
+      </div>
+    ))}</div>
+  </PublicMotion>
 }
 export function PublicHeader({ site, pages, catalog, preview = false }: { site: PublicIdentity, pages: NavigationPage[], catalog: boolean, preview?: boolean }) {
+  const pathname = usePathname()
+  const links = pages.map(page => ({ href: page.isHome ? '/' : '/' + page.slug, label: page.title }))
+  if (catalog) links.push({ href: '/catalogo', label: 'Catálogo' })
+  const contact = whatsapp(site)
   return <header className="public-header">
-    <a className="public-brand" href={preview ? undefined : '/'}>{site.logo ? <img src={site.logo.url} alt={site.logo.altText} /> : <span className="public-mark"><Coffee size={19} strokeWidth={1.65} /></span>}{site.siteName}</a>
+    <a className="public-brand" href={preview ? undefined : '/'}>
+      {site.logo ? <img src={site.logo.url} alt="" /> : <span className="public-mark"><Coffee size={21} strokeWidth={1.7} aria-hidden="true" /></span>}
+      <span>{site.siteName}</span>
+    </a>
     <nav aria-label="Navegación pública">
-      {pages.map(page => <a key={page.slug} href={preview ? undefined : page.isHome ? '/' : '/' + page.slug}>{page.title}</a>)}
-      {catalog && <a href={preview ? undefined : '/catalogo'}>Catálogo</a>}
+      {links.map(({ href, label }) => preview
+        ? <span key={href}>{label}</span>
+        : <Link key={href} href={href} aria-current={pathname === href ? 'page' : undefined}>{label}</Link>)}
     </nav>
-    {whatsapp(site) && <a className="public-text-link public-header-contact" href={preview ? undefined : whatsapp(site)} target="_blank" rel="noopener noreferrer">Escríbenos <ArrowUpRight size={16} /></a>}
+    {contact && <a className="public-text-link public-header-contact" href={preview ? undefined : contact}
+      target="_blank" rel="noopener noreferrer">Escríbenos <ArrowUpRight size={16} aria-hidden="true" /></a>}
   </header>
 }
 export function PublicFooter({ site, pages, catalog }: { site: PublicIdentity, pages: NavigationPage[], catalog: boolean }) {
   const socials = readJson<Record<string, string>>(site.socialLinksJson, {})
   return <footer className="public-footer">
-    <div><a className="public-brand" href="/">{site.siteName}</a><p>{site.tagline}</p></div>
+    <div className="footer-identity">
+      <Link className="public-brand" href="/">{site.siteName}</Link>
+      {site.tagline && <p>{site.tagline}</p>}
+      {site.address && <p><MapPin size={15} aria-hidden="true" /> {site.address}</p>}
+    </div>
     <nav aria-label="Navegación del pie">{pages.map(page => <Link href={page.isHome ? '/' : '/' + page.slug} key={page.slug}>{page.title}</Link>)}
       {catalog && <Link href="/catalogo">Catálogo</Link>}
       {Object.entries(socials).filter(([, url]) => url).map(([name, url]) => <a key={name} href={url} target="_blank" rel="noopener noreferrer">{name}</a>)}

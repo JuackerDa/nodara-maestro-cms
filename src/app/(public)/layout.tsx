@@ -9,6 +9,7 @@ export default async function PublicLayout({ children }: { children: React.React
   const { site, pages, theme, plan } = await publicContext()
   const link = whatsapp(site)
   return <ThemeProvider theme={theme}>
+    <a className="public-skip" href="#contenido">Ir al contenido</a>
     <PublicHeader site={{ ...site, logo: site.logo }} pages={pages} catalog={plan.enableCatalog}/>
     <main id="contenido">{children}</main>
     <PublicFooter site={site} pages={pages} catalog={plan.enableCatalog}/>

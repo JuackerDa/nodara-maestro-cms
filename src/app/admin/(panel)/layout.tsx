@@ -11,8 +11,14 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   return <div className="admin-shell">
     <AdminNav name={site.siteName} logo={site.logo?.url} catalog={plan.enableCatalog || agency} agency={agency}/>
     <main className="admin-main">
-      <div className="admin-top"><strong>Nodara Maestro</strong><div className="actions"><span className="user-name">{user.name}</span>
-        <span className="pill">{agency ? 'Super Admin' : 'Editor'}</span><Logout/></div></div>
+      <header className="admin-top">
+        <strong>Nodara Maestro</strong>
+        <div className="admin-account">
+          <span className="admin-avatar" aria-hidden="true">{user.name.trim().slice(0, 1).toLocaleUpperCase('es')}</span>
+          <div className="admin-account-info"><span className="user-name">{user.name}</span><span className="account-role">{agency ? 'Super Admin' : 'Editor'}</span></div>
+          <Logout/>
+        </div>
+      </header>
       <div className="admin-inner">{children}</div>
     </main>
   </div>

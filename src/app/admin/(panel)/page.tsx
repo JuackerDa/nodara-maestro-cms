@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowUpRight, Boxes, FileText, HardDrive, Phone } from 'lucide-react'
+import { ArrowUpRight, Boxes, FileText, Globe2, HardDrive, Phone } from 'lucide-react'
 import { ActivityList } from '@/components/admin/activity'
 import { Heading } from '@/components/admin/ui'
 import { publicContext } from '@/lib/public-data'
@@ -17,23 +17,37 @@ export default async function Dashboard() {
     db.page.findFirst({ where: { status: 'PUBLISHED', id: { not: catalogPageId } }, orderBy: { publishedAt: 'desc' }, select: { publishedAt: true } }),
     db.revision.findMany({ orderBy: { createdAt: 'desc' }, take: 16 }),
   ])
+  const storageBytes = storage._sum.sizeBytes ?? 0
+  const storageLimit = plan.maxStorageMb * 1_048_576
+  const productCount = plan.enableCatalog ? visible : 0
   const metrics = [
-    ['Páginas activas', String(active), String(plan.maxPages), FileText],
-    ['Productos publicados', String(plan.enableCatalog ? visible : 0), String(plan.maxProducts), Boxes],
-    ['Almacenamiento usado', sizeMb(storage._sum.sizeBytes ?? 0) + ' MB', plan.maxStorageMb + ' MB', HardDrive],
-  ] as const
+    { label: 'Páginas activas', value: active, max: plan.maxPages, used: active, limit: plan.maxPages, Icon: FileText },
+    { label: 'Productos publicados', value: productCount, max: plan.maxProducts, used: productCount, limit: plan.maxProducts, Icon: Boxes },
+    { label: 'Almacenamiento usado', value: sizeMb(storageBytes) + ' MB', max: plan.maxStorageMb + ' MB', used: storageBytes, limit: storageLimit, Icon: HardDrive },
+  ]
   return <><Heading title="Resumen" text="Estado de publicación y actividad del sitio."/>
-    <div className="panel-card dashboard-site"><div><span className={'pill' + (active ? ' live' : ' pending')}>{active ? 'Publicado' : 'Sin publicar'}</span>
-      <h2>{site.siteName}</h2><p className="subtle">{site.domain || 'Dominio sin configurar'}</p>
-      {latest?.publishedAt && <p className="subtle mt-1">Última publicación · {date.format(latest.publishedAt)}</p>}
-    </div><a className="btn primary" href="/" target="_blank" rel="noopener noreferrer">Abrir sitio en vivo <ArrowUpRight size={16}/></a></div>
-    <div className="dashboard-grid">{metrics.map(([label, value, max, Icon]) => <div className="panel-card" key={label}>
-      <span className="metric-icon"><Icon size={19}/></span><h2>{label}</h2>
+    <section className="panel-card dashboard-site">
+      <div className="dashboard-site-copy">
+        <span className={'pill' + (active ? ' live' : ' pending')}><Globe2 size={13} aria-hidden="true"/>{active ? 'Publicado' : 'Sin publicar'}</span>
+        <h2>{site.siteName}</h2>
+        {site.tagline && <p>{site.tagline}</p>}
+        <div className="dashboard-meta">
+          <span>{site.domain || 'Dominio sin configurar'}</span>
+          {latest?.publishedAt && <span>Última publicación · {date.format(latest.publishedAt)}</span>}
+        </div>
+      </div>
+      <a className="btn dashboard-launch" href="/" target="_blank" rel="noopener noreferrer">Abrir sitio en vivo <ArrowUpRight size={16}/></a>
+    </section>
+    <div className="dashboard-grid">{metrics.map(({ label, value, max, used, limit, Icon }) => <section className="panel-card dashboard-metric" key={label}>
+      <span className="metric-icon"><Icon size={19} aria-hidden="true"/></span><h2>{label}</h2>
       <div className="metric-value">{value} <small>/ {max}</small></div>
-    </div>)}</div>
-    <div className="actions mb-4"><Link href="/admin/paginas" className="btn"><FileText size={16}/> Editar páginas</Link>
+      {limit > 0 && <progress aria-label={label} value={Math.min(used, limit)} max={limit}/>}
+    </section>)}</div>
+    <nav className="dashboard-shortcuts" aria-label="Accesos rápidos">
+      <Link href="/admin/paginas" className="btn"><FileText size={16}/> Editar páginas</Link>
       {(plan.enableCatalog || user.role === 'SUPER_ADMIN') && <Link href="/admin/catalogo" className="btn"><Boxes size={16}/> Ver catálogo</Link>}
-      <Link href="/admin/contacto" className="btn"><Phone size={16}/> Editar contacto</Link></div>
+      <Link href="/admin/contacto" className="btn"><Phone size={16}/> Editar contacto</Link>
+    </nav>
     <ActivityList revisions={revisions.map(({ snapshotJson, ...revision }) => ({ ...revision, restorable: !!snapshotJson }))}/>
   </>
 }

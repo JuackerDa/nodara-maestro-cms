@@ -12,7 +12,7 @@ export default async function LoginPage() {
   const site = await db.siteConfig.findUnique({ where: { id: 'site' }, include: { logo: true } })
   return <main className="login-screen">
     <div className="login-form-area"><div className="login-box">
-      <a href="/" className="actions"><span className="brand-icon">{site?.logo ? <img src={site.logo.url} alt=""/> : <Coffee size={23}/>}</span>
+      <a href="/" className="login-brand actions"><span className="brand-icon">{site?.logo ? <img src={site.logo.url} alt=""/> : <Coffee size={23}/>}</span>
         <strong>{site?.siteName || 'Nodara Maestro'}</strong></a>
       <h1>Iniciar sesión</h1><p className="muted">Accede al panel de tu sitio web.</p>
       <LoginForm/>

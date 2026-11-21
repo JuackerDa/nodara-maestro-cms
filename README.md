@@ -34,6 +34,7 @@ El seed carga el negocio ficticio **Casa Nómada**, dos páginas de contenido, c
 - **Multimedia.** Admite JPG, PNG y WebP de hasta 2 MiB por archivo. Reemplazar una imagen conserva su ID. El borrado comprueba referencias de bloques, productos, SEO, logotipo e icono.
 - **SEO.** Las vistas previas se actualizan mientras editas. En producción configura la URL canónica en Agencia o mediante `APP_ORIGIN`.
 - **Agencia.** Solo el Super Admin puede cambiar temas, límites, módulos o cuentas de editor. Desactivar el catálogo oculta su navegación, bloques y ruta pública, y retira el acceso al editor. Blog y formularios tienen indicadores de plan reservados para su implementación.
+- **Animación pública.** GSAP y ScrollTrigger animan las entradas de contenido y el desplazamiento de la portada. El ajuste de animación del tema controla la intensidad. El sitio respeta la preferencia de movimiento reducido del dispositivo.
 - **Respaldos.** La exportación JSON incluye contenido, historial, imágenes incrustadas y hashes de contraseñas. El límite por respaldo es de 64 MiB. La restauración valida el archivo antes de reemplazar los datos en una transacción, conserva la cuenta del Super Admin que la ejecuta e invalida las sesiones de las cuentas restauradas.
 
 ## PostgreSQL y despliegue
